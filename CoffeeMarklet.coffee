@@ -1,5 +1,16 @@
 root = exports ? this
 
+jsLoad = (s, c) ->
+  x = document.createElement('script')
+  x.type = 'text/javascript'
+  x.src = s
+  y = 1
+  x.onload = x.onreadystatechange = () ->
+    if y and not @readyState or @readyState is 'complete'
+      y = !y
+      c()
+  document.getElementsByTagName('head')[0].appendChild x
+
 class CoffeeMarklet
     compile: (cs, callback, add_jquery = true, jquery_version = '1.6.1') ->
         js = CoffeeScript.compile cs, {bare: true}
@@ -12,6 +23,31 @@ class CoffeeMarklet
             (compiled) =>
                 bookmarklet = @makeURI($.trim(compiled), add_jquery, jquery_version)
                 callback bookmarklet
+
+    decompile: (src, callback) ->
+      wraprx1 = /^\( *-> *\n/
+      wraprx2 = /\n\) *\( *\)[ \n]*$/
+      doit = (js2coffee) ->
+        src = decodeURIComponent(src)
+        src = js2coffee.build(src)
+        if wraprx1.test(src) and wraprx2.test(src)
+          x = src
+          x = x.replace(wraprx1, "")
+          x = x.replace(wraprx2, "")
+          unless /\n[^ \t\n]/.test(x)
+            src = x
+        callback(src)
+      if x = root?.Js2coffee
+        doit(x)
+      else
+        jsLoad "http://js2coffee.org/scripts/underscore.min.js", ->
+          jsLoad "http://js2coffee.org/scripts/ace/ace.js", ->
+            jsLoad "http://js2coffee.org/scripts/js2coffee.js", ->
+              # alert "loaded!!!!"
+              doit(root.Js2coffee)
+      # CoffeeScript.load "https://github.com/rstacruz/js2coffee/raw/master/lib/js2coffee.coffee", ->
+      #   js2coffee = root.Js2coffee
+      #   js2coffee.build(src)
 
     makeURI: (code, add_jquery, jquery_version) ->
         if add_jquery

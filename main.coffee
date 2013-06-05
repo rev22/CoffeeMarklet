@@ -12,14 +12,23 @@ $ ->
     
     $('#src_check').change ->
         $('#output-area').slideToggle()
+
+    jsbookmarklet = /^(\#[^\n]*\n|\n)*javascript:/
         
     $('#gen-button').click ->
+        cs = $('#input').val()
+
+        if jsbookmarklet.test cs
+          cs = cs.replace jsbookmarklet, ""
+          return coffeemarklet.decompile cs, (code) ->
+            $('#input').val code
+
         if bm_div.is(':visible')
             bm_div.fadeOut('slow')
             @refreshing = true
             
         jquery_include = $('#jq_check').is(':checked')
-        cs = $('#input').val()
+        
         jquery_version = $('#jq_ver').val()
         callback = (uri) =>
             $('#output').val(uri)
